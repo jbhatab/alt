@@ -14,6 +14,7 @@ var ACTION_DISPATCHER = Symbol("action dispatcher storage");
 var ACTION_HANDLER = Symbol("action creator handler");
 var ACTION_KEY = Symbol("holds the actions uid symbol for listening");
 var ACTION_UID = Symbol("the actions uid name");
+var ALT_LISTENERS = Symbol("global dispatcher listeners");
 var BOOTSTRAP_FLAG = VariableSymbol("has bootstrap");
 var EE = Symbol("event emitter instance");
 var INIT_SNAPSHOT = Symbol("init snapshot storage");
@@ -239,6 +240,7 @@ var Alt = (function () {
     this.stores = {};
     this[LAST_SNAPSHOT] = null;
     this[INIT_SNAPSHOT] = "{}";
+    this[ALT_LISTENERS] = {};
   }
 
   to5Runtime.prototypeProperties(Alt, null, {
@@ -327,6 +329,36 @@ var Alt = (function () {
 
           return obj;
         }, exportObj);
+      },
+      writable: true,
+      configurable: true
+    },
+    addActionListener: {
+      value: function addActionListener(symAction, handler) {
+        var id = this.dispatcher.register(function (payload) {
+          symAction === payload.action && handler(payload.data);
+        });
+        this[ALT_LISTENERS][id] = true;
+        return id;
+      },
+      writable: true,
+      configurable: true
+    },
+    removeActionListener: {
+      value: function removeActionListener(id) {
+        delete this[ALT_LISTENERS][id];
+        this.dispatcher.unregister(id);
+      },
+      writable: true,
+      configurable: true
+    },
+    removeAllActionListeners: {
+      value: function removeAllActionListeners() {
+        var _this = this;
+        Object.keys(this[ALT_LISTENERS]).forEach(function (id) {
+          return _this.removeActionListener(id);
+        });
+        this[ALT_LISTENERS] = {};
       },
       writable: true,
       configurable: true

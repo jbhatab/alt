@@ -12,6 +12,7 @@ let ACTION_DISPATCHER = Symbol('action dispatcher storage')
 let ACTION_HANDLER = Symbol('action creator handler')
 let ACTION_KEY = Symbol('holds the actions uid symbol for listening')
 let ACTION_UID = Symbol('the actions uid name')
+let ALT_LISTENERS = Symbol('global dispatcher listeners')
 let BOOTSTRAP_FLAG = VariableSymbol('has bootstrap')
 let EE = Symbol('event emitter instance')
 let INIT_SNAPSHOT = Symbol('init snapshot storage')
@@ -215,6 +216,7 @@ class Alt {
     this.stores = {}
     this[LAST_SNAPSHOT] = null
     this[INIT_SNAPSHOT] = '{}'
+    this[ALT_LISTENERS] = {}
   }
 
   createStore(StoreModel, iden) {
@@ -293,6 +295,24 @@ your own custom identifier for each store`
 
       return obj
     }, exportObj)
+  }
+
+  addActionListener(symAction, handler) {
+    let id = this.dispatcher.register((payload) => {
+      symAction === payload.action && handler(payload.data)
+    })
+    this[ALT_LISTENERS][id] = true
+    return id
+  }
+
+  removeActionListener(id) {
+    delete this[ALT_LISTENERS][id]
+    this.dispatcher.unregister(id)
+  }
+
+  removeAllActionListeners() {
+    Object.keys(this[ALT_LISTENERS]).forEach((id) => this.removeActionListener(id))
+    this[ALT_LISTENERS] = {}
   }
 
   takeSnapshot() {

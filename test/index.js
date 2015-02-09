@@ -652,5 +652,32 @@ module.exports = {
     assert.equal(nameStore2.getState().name, 'baz', 'this store has different state')
     assert.equal(altInstance.getStore('myStore').getState().name, 'first', 'other stores not affected')
     assert.equal(myStore.getState().name, 'first', 'other singleton store not affected')
+  },
+
+  'listen to actions globally'() {
+    var id = alt.addActionListener(myActions.UPDATE_NAME, (name) => {
+      assert.equal(name, 'yes', 'proper data was passed in')
+    })
+
+    assert.equal(typeof id, 'string', 'the dispatcher id is returned for the listener')
+
+    myActions.updateName('yes')
+
+    alt.removeActionListener(id)
+
+    myActions.updateName('no')
+    assert.equal(true, true, 'no error was thrown by above action since listener was removed')
+
+    alt.addActionListener(myActions.UPDATE_NAME, (name) => {
+      assert.equal(name, 'mud', 'proper data was passed in again')
+    })
+
+    myActions.updateName('mud')
+
+    alt.removeAllActionListeners()
+
+    myActions.updateName('bill')
+
+    assert.equal(true, true, 'all listeners were removed')
   }
 }
